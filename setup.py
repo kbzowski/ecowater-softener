@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as f:
+with open("README.MD", "r") as f:
     long_description = f.read()
 
 setup(
     name="ecowater_softener",
-    version="2.2.0",
+    version="2.3.0",
     author="barleybobs",
     description="A small package to pull data from Ecowater water softeners",
     long_description=long_description,

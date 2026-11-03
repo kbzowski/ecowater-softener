@@ -137,8 +137,35 @@ class EcowaterDevice(ayla_iot_unofficial.device.Device):
     
     @property
     def last_recharge_date(self) -> datetime.date:
-        return datetime.datetime.now().date() - datetime.timedelta(days = self.get_property_value("days_since_last_regen"))
-    
+        # The device bumps the counter around midday, so count from the counter's own update date, not today
+        return self._property_updated_at("days_since_last_regen").astimezone().date() - datetime.timedelta(days = self.get_property_value("days_since_last_regen"))
+
+    @property
+    def recharge_time(self) -> datetime.time:
+        secs = self.get_property_value("regen_time_secs")
+        return datetime.time(secs // 3600, secs % 3600 // 60)
+
+    @property
+    def next_recharge_time(self) -> datetime.datetime:
+        # Uses the device clock (current_time_secs at its update moment), so no timezone guessing is needed
+        secs_until = (self.get_property_value("regen_time_secs") - self.get_property_value("current_time_secs")) % 86400
+        next_time = self._property_updated_at("current_time_secs") + datetime.timedelta(seconds = secs_until)
+        return next_time.replace(second = 0) + datetime.timedelta(minutes = round(next_time.second / 60))
+
+    def schedule_recharge(self) -> None:
+        # The device recharges at its next recharge time
+        self._set_regen_status(1)
+
+    def recharge_now(self) -> None:
+        self._set_regen_status(2)
+
+    def _set_regen_status(self, value: int) -> None:
+        self.ayla_api.self_request('post', self.set_property_endpoint("regen_status_enum"), json={'datapoint': {'value': value}})
+
+    def _property_updated_at(self, name: str) -> datetime.datetime:
+        updated_at = datetime.datetime.strptime(self.properties_full[name]["data_updated_at"], "%Y-%m-%dT%H:%M:%SZ")
+        return updated_at.replace(tzinfo = datetime.timezone.utc)
+
 
 class EcowaterAccount:
     def __init__(self, username: str, password: str) -> None:

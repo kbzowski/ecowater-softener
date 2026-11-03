@@ -5,9 +5,27 @@
 
 ecowater-softener is a Python library for collecting information from Ecowater water softeners.
 
+## About this fork
+
+This is a fork of [barleybobs/ecowater-softener](https://github.com/barleybobs/ecowater-softener) (v2.2.1). It adds:
+
+- `water_total_counter`, `ion_operating_capacity`, `ion_capacity_remaining`, `ion_average_exhaustion`
+- `recharge_time` and `next_recharge_time`, read from the device's `regen_time_secs` and its own clock
+- `schedule_recharge()` and `recharge_now()`, which write `regen_status_enum` (1 = scheduled, 2 = recharging)
+- a fix for `last_recharge_date`, which was a day late between midnight and the device's daily counter update (around midday)
+- a fix for `setup.py` reading `README.md`, which broke builds on case-sensitive filesystems
+
+It is used by the [kbzowski/homeassistant-ecowater-softener](https://github.com/kbzowski/homeassistant-ecowater-softener) fork of the Home Assistant integration.
+
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ecowater.
+This fork is not on PyPI. Install it from GitHub:
+
+```bash
+pip install "ecowater-softener @ https://github.com/kbzowski/ecowater-softener/archive/main.zip"
+```
+
+The upstream version is on PyPI:
 
 ```bash
 pip install ecowater-softener
@@ -210,6 +228,30 @@ Get the date of the last recharge (datetime.date)
 
 ```python
 last_recharge_date = device.last_recharge_date
+```
+
+Get the time of day the device checks whether to recharge and recharges if needed (datetime.time, device clock)
+
+```python
+recharge_time = device.recharge_time
+```
+
+Get the next time the device checks whether to recharge (timezone-aware datetime.datetime, UTC)
+
+```python
+next_recharge_time = device.next_recharge_time
+```
+
+Schedule a recharge at the next recharge time
+
+```python
+device.schedule_recharge()
+```
+
+Start a recharge now
+
+```python
+device.recharge_now()
 ```
 
 
